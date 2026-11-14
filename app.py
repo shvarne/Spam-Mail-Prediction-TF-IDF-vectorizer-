@@ -1,32 +1,31 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jan  8 16:22:11 2026
-
-@author: shrey
-"""
-
 import streamlit as st
 import pickle
 
-model = pickle.load(open('D:/Generative AI (Ml, Dl, etc)/Natural Language Processing/Project-Spam mail Prediction/spam_model.pkl','rb'))
-cv = pickle.load(open('D:/Generative AI (Ml, Dl, etc)/Natural Language Processing/Project-Spam mail Prediction/vectorizer.pkl','rb'))
+# Load the saved vectorizer and machine learning model
+try:
+    vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
+    model = pickle.load(open('spam_model.pkl', 'rb'))
+except FileNotFoundError as e:
+    st.error(f"Error loading model files: {e}. Make sure 'vectorizer.pkl' and 'spam_model.pkl' are in the same folder as app.py.")
 
-# creating UI
-st.title("Email Spam Detector")
-st.write("Enter an email message below to see if its Spam or Ham")
+st.title("📧 Spam Mail Detection App")
+st.write("Enter an email or text message below to check whether it is **Spam** or **Not Spam (Ham)**.")
 
-# Getting user input
-input_mail = st.text_area("Paste the email content here:", height = 200)
+# User input text box
+input_message = st.text_area("Enter message here:")
 
 if st.button("Predict"):
-    if input_mail:
-        data = cv.transform([input_mail])
-        prediction = model.predict(data)
-        
-        if prediction[0]==1:
-            st.success("This is a **HAM** Mail !")
-        else:
-            st.error("This is a **SPAM** Mail !")
-            
+    if input_message.strip() == "":
+        st.warning("Please enter a message first.")
     else:
-        st.warning("Please enter some text.")
+        # 1. Transform the input text using the TF-IDF vectorizer
+        transformed_input = vectorizer.transform([input_message])
+        
+        # 2. Predict using the trained machine learning model
+        prediction = model.predict(transformed_input)[0]
+        
+        # 3. Display the result
+        if prediction == 1 or prediction == 'spam':
+            st.error("🚨 This is a **SPAM** message!")
+        else:
+            st.success("✅ This is **NOT SPAM (Ham)**.")
